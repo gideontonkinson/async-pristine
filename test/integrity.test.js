@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Pristine from "../src/pristine";
 
 describe('Integrity', function() {
@@ -21,7 +22,7 @@ describe('Integrity', function() {
   });
 
 
-  it('should have no errors when validates to true', () => {
+  it('should have no errors when validates to true', async () => {
 
     let form = document.getElementById("fixture")
     let input = document.getElementById("input")
@@ -29,25 +30,25 @@ describe('Integrity', function() {
 
     input.value = "some value";
 
-    expect(pristine.validate()).toBe(true);
+    expect(await pristine.validate()).toBe(true);
     expect(pristine.getErrors().length).toBe(0);
 
   });
 
-  it('should not validate hidden input', () => {
+  it('should not validate hidden input', async () => {
 
     let form = document.getElementById("fixture")
     let pristine = new Pristine(form);
 
-    expect(pristine.validate()).toBe(false);
+    expect(await pristine.validate()).toBe(false);
     expect(pristine.getErrors().length).toBe(1);
 
     let input = document.getElementById("input")
     input.value = "some value";
-    expect(pristine.validate()).toBe(true);
+    expect(await pristine.validate()).toBe(true);
     expect(pristine.getErrors().length).toBe(0);
 
-    expect(pristine.validate(document.getElementById("input-hidden"))).toBe(true);
+    expect(await pristine.validate(document.getElementById("input-hidden"))).toBe(true);
 
   });
 
