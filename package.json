@@ -1,8 +1,9 @@
 {
-  "name": "pristinejs",
+  "name": "async-pristinejs",
   "version": "1.1.0",
   "description": "A tiny vanilla javascript form validation library",
   "main": "dist/pristine.js",
+  "types": "src/pristine.d.ts",
   "scripts": {
     "test": "karma start karma.conf.js --single-run",
     "build": "rollup -c"

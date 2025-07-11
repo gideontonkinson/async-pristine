@@ -7,12 +7,12 @@ let defaultConfig = {
     successClass: 'has-success',
     errorTextParent: 'form-group',
     errorTextTag: 'div',
-    errorTextClass: 'text-help'
+    errorTextClass: 'text-help',
 };
 
 const PRISTINE_ERROR = 'pristine-error';
 const SELECTOR = "input:not([type^=hidden]):not([type^=submit]), select, textarea";
-const ALLOWED_ATTRIBUTES = ["required", "min", "max", 'minlength', 'maxlength', 'pattern'];
+const ALLOWED_ATTRIBUTES = new Set(["required", "min", "max", 'minlength', 'maxlength', 'pattern']);
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
 const MESSAGE_REGEX = /-message(?:-([a-z]{2}(?:_[A-Z]{2})?))?/; // matches, -message, -message-en, -message-en_US
@@ -50,12 +50,31 @@ export default function Pristine(form, config, live){
 
         self.form = form;
         self.config = mergeConfig(config || {}, defaultConfig);
-        self.live = !(live === false);
+        if (live === "live") {
+            self.live = "live";
+        } else if (live === "blur") {
+            self.live = "blur";
+        } else if (live === "hybrid") {
+            self.live = "hybrid"
+        } else {
+            self.live = "off"
+        }
         self.fields = Array.from(form.querySelectorAll(SELECTOR)).map(function (input) {
 
             let fns = [];
             let params = {};
             let messages = {};
+            let overlappingAttributes = new Set;
+
+            // Check for overlapping attributes and prefer the pristine
+            [].forEach.call(input.attributes, function (attr) {
+                if (/^data-pristine-/.test(attr.name)) {
+                    let name = attr.name.substr(14);
+                    if(~ALLOWED_ATTRIBUTES.has(name)){
+                       overlappingAttributes.add(name)
+                    }
+                }
+            });
 
             [].forEach.call(input.attributes, function (attr) {
                 if (/^data-pristine-/.test(attr.name)) {
@@ -70,7 +89,7 @@ export default function Pristine(form, config, live){
                     }
                     if (name === 'type') name = attr.value;
                     _addValidatorToField(fns, params, name, attr.value);
-                } else if (~ALLOWED_ATTRIBUTES.indexOf(attr.name)){
+                } else if (~ALLOWED_ATTRIBUTES.has(attr.name) && !overlappingAttributes.has(attr.name)){
                     _addValidatorToField(fns, params, attr.name, attr.value);
                 } else if (attr.name === 'type'){
                     _addValidatorToField(fns, params, attr.value);
@@ -79,9 +98,39 @@ export default function Pristine(form, config, live){
 
             fns.sort( (a, b) => b.priority - a.priority);
 
-            self.live && input.addEventListener((!~['radio', 'checkbox'].indexOf(input.getAttribute('type')) ? 'input':'change'), function(e) {
-                self.validate(e.target);
-            }.bind(self));
+            
+
+            if (self.live === 'live') {
+                input.addEventListener((!~['radio', 'checkbox'].indexOf(input.getAttribute('type')) ? 'input':'change'), function(e) {
+                    self.validate(e.target);
+                }.bind(self));
+            } else if (self.live === 'blur') {
+                input.addEventListener((!~['radio', 'checkbox'].indexOf(input.getAttribute('type')) ? 'blur':'change'), function(e) {
+                    self.validate(e.target);
+                }.bind(self));
+            } else if (self.live === 'hybrid') {
+                let touched = false
+                const defaultValue = input.value
+                input.addEventListener((!~['radio', 'checkbox'].indexOf(input.getAttribute('type')) ? 'blur':'change'), function(e) {
+                    touched = true
+                    self.validate(e.target);
+                }.bind(self));
+                input.addEventListener((!~['radio', 'checkbox'].indexOf(input.getAttribute('type')) ? 'input':'change'), function(e) {
+                    if (touched) {
+                        self.validate(e.target);
+                    }
+                }.bind(self));
+                input.addEventListener('input', function () {
+                    const changed = type === 'checkbox' || type === 'radio'
+                        ? input.checked !== defaultChecked
+                        : input.value !== defaultValue
+
+                    if (changed && !touched) {
+                        touched = true
+                        self.validate(input)
+                    }
+                })
+            }
 
             return input.pristine = {input, validators: fns, params, messages, self};
 
@@ -106,7 +155,7 @@ export default function Pristine(form, config, live){
      * @param silent => do not show error messages, just return true/false
      * @returns {boolean} return true when valid false otherwise
      */
-    self.validate = function(input, silent){
+    self.validate = async function(input, silent){
         silent = (input && silent === true) || input === true;
         let fields = self.fields;
         if (input !== true && input !== false){
@@ -121,7 +170,7 @@ export default function Pristine(form, config, live){
 
         for(let i = 0; fields[i]; i++) {
             let field = fields[i];
-            if (_validateField(field)){
+            if (await _validateField(field)){
                 !silent && _showSuccess(field);
             } else {
                 valid = false;
@@ -160,14 +209,16 @@ export default function Pristine(form, config, live){
      * @returns {boolean}
      * @private
      */
-    function _validateField(field){
+    async function _validateField(field){
         let errors = [];
         let valid = true;
         for(let i = 0; field.validators[i]; i++) {
             let validator = field.validators[i];
+            
             let params = field.params[validator.name] ? field.params[validator.name] : [];
             params[0] = field.input.value;
-            if (!validator.fn.apply(field.input, params)){
+            const isAsync = fn.constructor.name === "AsyncFunction"
+            if (isAsync ? !(await validator.fn.apply(field.input, params)) : !validator.fn.apply(field.input, params)){
                 valid = false;
 
                 if (typeof validator.msg === "function") {
@@ -203,6 +254,24 @@ export default function Pristine(form, config, live){
      * @param halt => whether validation should stop for this field after current validation function
      */
     self.addValidator = function(elem, fn, msg, priority, halt){
+        if (elem instanceof HTMLElement){
+            elem.pristine.validators.push({fn, msg, priority, halt});
+            elem.pristine.validators.sort( (a, b) => b.priority - a.priority);
+        } else {
+            console.warn("The parameter elem must be a dom element");
+        }
+    };
+
+    /***
+     * Add an async validator to a specific dom element in a form
+     * @param elem => The dom element where the validator is applied to
+     * @param fn => async validator function
+     * @param msg => message to show when validation fails. Supports templating. ${0} for the input's value, ${1} and
+     * so on are for the attribute values
+     * @param priority => priority of the validator function, higher valued function gets called first.
+     * @param halt => whether validation should stop for this field after current validation function
+     */
+    self.addAsyncValidator = function(elem, fn, msg, priority, halt){
         if (elem instanceof HTMLElement){
             elem.pristine.validators.push({fn, msg, priority, halt});
             elem.pristine.validators.sort( (a, b) => b.priority - a.priority);
@@ -346,6 +415,19 @@ export default function Pristine(form, config, live){
  * @param halt => whether validation should stop for this field after current validation function
  */
 Pristine.addValidator = function(name, fn, msg, priority, halt){
+    _(name, {fn, msg, priority, halt});
+};
+
+/***
+ *
+ * @param name => Name of the global validator
+ * @param fn => async validator function
+ * @param msg => message to show when validation fails. Supports templating. ${0} for the input's value, ${1} and
+ * so on are for the attribute values
+ * @param priority => priority of the validator function, higher valued function gets called first.
+ * @param halt => whether validation should stop for this field after current validation function
+ */
+Pristine.addAsyncValidator = function(name, fn, msg, priority, halt){
     _(name, {fn, msg, priority, halt});
 };
 
