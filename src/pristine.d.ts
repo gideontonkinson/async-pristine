@@ -36,7 +36,7 @@ declare module "pristinejs" {
   export default class Pristine {
     constructor(form: HTMLFormElement, config?: PristineOptions, live?: PristineLive);
 
-    async validate(input?: HTMLElement, silent?: boolean): boolean;
+    validate(input?: HTMLElement, silent?: boolean): Promise<boolean>;
     reset(): void;
     destroy(): void;
 
