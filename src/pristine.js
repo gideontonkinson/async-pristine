@@ -319,8 +319,13 @@ export default function Pristine(form, config, live){
         const errorId = `error-${inputId}`;
 
         if(errorClassElement){
-            errorClassElement.classList.remove(self.config.successClass);
-            errorClassElement.classList.add(self.config.errorClass);
+            //errorClassElement.classList.remove(self.config.successClass);
+            //errorClassElement.classList.add(self.config.errorClass);
+
+            let errCls = createClassArray(self.config.errorClass);
+            let sucCls = createClassArray(self.config.successClass);                        
+            if(sucCls.length) {sucCls.forEach((s) => errorClassElement.classList.remove(s))};      
+            if(errCls.length) {errCls.forEach((e) => errorClassElement.classList.add(e))};
             input.setAttribute('aria-describedby', errorId);
             input.setAttribute('aria-invalid', 'true');
         }
@@ -350,8 +355,12 @@ export default function Pristine(form, config, live){
 
         if (errorClassElement){
             // IE > 9 doesn't support multiple class removal
-            errorClassElement.classList.remove(self.config.errorClass);
-            errorClassElement.classList.remove(self.config.successClass);
+            // errorClassElement.classList.remove(self.config.errorClass);
+            // errorClassElement.classList.remove(self.config.successClass);
+            let errCls = createClassArray(self.config.errorClass);
+            let sucCls = createClassArray(self.config.successClass);            
+            if(errCls.length) {errCls.forEach((e) => errorClassElement.classList.remove(e))};
+            if(sucCls.length) {sucCls.forEach((s) => errorClassElement.classList.remove(s))};
             input.removeAttribute('aria-describedby');
             input.removeAttribute('aria-invalid');
         }
@@ -365,8 +374,10 @@ export default function Pristine(form, config, live){
     }
 
     function _showSuccess(field){
-        let errorClassElement = _removeError(field)[0];
-        errorClassElement && errorClassElement.classList.add(self.config.successClass);
+        let errorClassElement = _removeError(field)[0];        
+        //errorClassElement && errorClassElement.classList.add(self.config.successClass);
+        let sucCls = createClassArray(self.config.successClass);
+        if(sucCls.length) {errorClassElement &&   sucCls.forEach((s) => errorClassElement.classList.add(s))};
     }
 
     /***
@@ -380,11 +391,26 @@ export default function Pristine(form, config, live){
             elem.parentNode.removeChild(elem);
         });
         Array.from(self.form.querySelectorAll('.' + self.config.classTo)).map(function (elem) {
-            elem.classList.remove(self.config.successClass);
-            elem.classList.remove(self.config.errorClass);
+            // elem.classList.remove(self.config.successClass);
+            // elem.classList.remove(self.config.errorClass);
+            let errCls = createClassArray(self.config.errorClass);
+            let sucCls = createClassArray(self.config.successClass);                        
+            if(errCls.length) { sucCls.forEach((s) => elem.classList.remove(s)) };
+            if(errCls.length) { errCls.forEach((e) => elem.classList.remove(e)) };
         });
 
+
     };
+
+    /***
+    * Convert the multiple classes into an array and remove spaces
+    * if the class string is empty array
+    */    
+    function createClassArray(classString){
+        let cls = classString.split(" ").filter(e => e);    
+        if (cls.length) return cls;
+        return ([]);
+    }
 
     /***
      * Resets the errors and deletes all pristine fields
