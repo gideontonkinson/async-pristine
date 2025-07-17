@@ -1,59 +1,48 @@
 // pristine.d.ts
-
-declare module "pristinejs" {
-  export interface PristineValidator {
-    name: string;
-    fn: (value: string, el?: HTMLElement) => boolean;
-    msg: string;
-    priority: number;
-    halt: boolean;
-  }
-
-  export interface PristineAsyncValidator {
-    name: string;
-    fn: (value: string, el?: HTMLElement) => Promise<boolean>;
-    msg: string;
-    priority: number;
-    halt: boolean;
-  }
-
-  interface PristineOptions {
+declare module "async-pristinejs" {
+  export interface PristineConfig {
     classTo?: string;
     errorClass?: string;
     successClass?: string;
     errorTextParent?: string;
     errorTextTag?: string;
     errorTextClass?: string;
+    disableSubmitUntilValid?: boolean;
+    validateDefaultValues?: boolean;
+    validationStrategy?: 'live' | 'blur' | 'hybrid' | 'off';
   }
 
-  enum PristineLive {
-    live = "live",
-    blur = "blur",
-    hybrid = "hybrid",
-    off = "off"
+  export interface Validator {
+    fn: (val: any, ...params: any[]) => boolean | Promise<boolean>;
+    msg?: string | ((val: any, params: any[]) => string);
+    priority?: number;
+    halt?: boolean;
+  }
+
+  export interface Field {
+    input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+    validators: Validator[];
+    params: Record<string, any[]>;
+    messages: Record<string, Record<string, string>>;
+    defaultValue: any;
+    touched: boolean;
+    pristine: any;
+    errors?: string[];
+    errorsElements?: HTMLElement[];
   }
 
   export default class Pristine {
-    constructor(form: HTMLFormElement, config?: PristineOptions, live?: PristineLive);
+    constructor(form: HTMLFormElement, config?: PristineConfig);
+    validate(input?: HTMLElement | boolean, silent?: boolean): Promise<boolean>;
+    getErrors(input?: HTMLElement): string[] | { input: HTMLElement, errors: string[] }[];
+    addValidator(elem: HTMLElement, fn: Validator['fn'], msg?: Validator['msg'], priority?: number, halt?: boolean): void;
+    reset(): Promise<void>;
+    destroy(): Promise<void>;
+    setGlobalConfig(config: PristineConfig): void;
 
-    validate(input?: HTMLElement, silent?: boolean): Promise<boolean>;
-    reset(): void;
-    destroy(): void;
-
-    static addValidator(
-      name: string,
-      fn: (value: string, el?: HTMLElement) => boolean,
-      msg: string,
-      priority?: number,
-      halt?: boolean
-    ): void;
-
-    static addAsyncValidator(
-      name: string,
-      fn: (value: string, el?: HTMLElement) => Promise<boolean>,
-      msg: string,
-      priority?: number,
-      halt?: boolean
-    ): void;
+    static addValidator(name: string, fn: Validator['fn'], msg?: Validator['msg'], priority?: number, halt?: boolean): void;
+    static addMessages(locale: string, messages: Record<string, string>): void;
+    static setLocale(locale: string): void;
   }
 }
+

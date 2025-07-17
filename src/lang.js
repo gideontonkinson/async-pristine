@@ -10,6 +10,9 @@ export const lang = {
     minlength: "This fields length must be > ${1}",
     min: "Minimum value for this field is ${1}",
     max: "Maximum value for this field is ${1}",
+    filesize: "Maximum file size is ${1}",
+    filesizetotal: "Maximum total file size ${1}",
+    filetype: "Allowed file types: ${1.split(',').join(' ')}",
     pattern: "Please match the requested format",
     equals: "The two fields do not match",
     default: "Please enter a correct value"

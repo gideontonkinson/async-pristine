@@ -61,7 +61,9 @@ let defaultConfig = {
     // type of element to create for the error text
     errorTextTag: 'div',
     // class of the error text element
-    errorTextClass: 'text-help' 
+    errorTextClass: 'text-help', 
+    // disable the submit button until form is valid
+    disableSubmitUntilValid: true
 };
 ```
 
