@@ -1,4 +1,4 @@
-# Pristine - Vanilla javascript form validation library
+# Asyn Pristine - Vanilla javascript form validation library (forked from Pristine)
 {:.hide}
 
 **~4kb minified, ~2kb gzipped, no dependencies**
@@ -6,6 +6,9 @@
 ## Living demo
 
 Some examples of use can be found [here](http://pristine.js.org/demo.html).
+
+## Changes
+- Added the ability to choose to validate from the server
 
 ## Usage
 
