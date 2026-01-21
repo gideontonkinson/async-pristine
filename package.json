@@ -1,6 +1,6 @@
 {
   "name": "async-pristinejs",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A tiny vanilla javascript form validation library",
   "main": "dist/pristine.js",
   "module": "dist/pristine.esm.js",
