@@ -10,6 +10,7 @@ declare module "async-pristinejs" {
     disableSubmitUntilValid?: boolean;
     validateDefaultValues?: boolean;
     validationStrategy?: 'live' | 'blur' | 'hybrid' | 'off';
+    validateHiddenInputs?: boolean;
   }
 
   export interface Validator {

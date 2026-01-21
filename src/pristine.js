@@ -15,11 +15,13 @@ let defaultConfig = {
   errorTextClass: 'text-help',
   disableSubmitUntilValid: true,
   validateDefaultValues: true,
-  validationStrategy: 'off'
+  validationStrategy: 'off',
+  validateHiddenInputs: false,
 };
 
 const PRISTINE_ERROR = 'pristine-error';
 const SELECTOR = 'input:not([type^=hidden]):not([type^=submit]), select, textarea';
+const SELECTOR_HIDDEN = 'input:not([type^=submit]), select, textarea';
 const ALLOWED_ATTRIBUTES = new Set(['required', 'min', 'max', 'minlength', 'maxlength', 'pattern']);
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@']+(\.[^<>()\[\]\\.,;:\s@']+)*)|('.+'))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
@@ -128,7 +130,7 @@ export default class Pristine {
       self.config = mergeConfig(config || {}, defaultConfig);
 
       /** @type {Field[]} */
-      self.fields = Array.from(form.querySelectorAll(SELECTOR)).map(
+      self.fields = Array.from(form.querySelectorAll(config.validateHiddenInputs ? SELECTOR_HIDDEN : SELECTOR)).map(
         /** @param {HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement} input */
         function(input) {
           /** @type {Field['validators']} */
