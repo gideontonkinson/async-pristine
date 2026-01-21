@@ -182,19 +182,19 @@ export default class Pristine {
           fns.sort((a, b) => b.priority - a.priority);
 
           if (self.config.validationStrategy === 'live') {
-            _addEventListener(input, (!~['radio', 'checkbox', 'select'].indexOf(input.getAttribute('type')) ? 'input' : 'change'), async function(e) {
+            _addEventListener(input, (!~['radio', 'checkbox', 'select', 'hidden'].indexOf(input.getAttribute('type')) ? 'input' : 'change'), async function(e) {
               await self.validate(e.target);
             }.bind(self));
           } else if (self.config.validationStrategy === 'blur') {
-            _addEventListener(input, (!~['radio', 'checkbox', 'select'].indexOf(input.getAttribute('type')) ? 'blur' : 'change'), async function(e) {
+            _addEventListener(input, (!~['radio', 'checkbox', 'select', 'hidden'].indexOf(input.getAttribute('type')) ? 'blur' : 'change'), async function(e) {
               await self.validate(e.target);
             }.bind(self));
           } else if (self.config.validationStrategy === 'hybrid') {
-            _addEventListener(input, (!~['radio', 'checkbox', 'select'].indexOf(input.getAttribute('type')) ? 'blur' : 'change'), async function(e) {
+            _addEventListener(input, (!~['radio', 'checkbox', 'select', 'hidden'].indexOf(input.getAttribute('type')) ? 'blur' : 'change'), async function(e) {
               touched = true;
               await self.validate(e.target);
             }.bind(self), { once: true });
-            _addEventListener(input, (!~['radio', 'checkbox', 'select'].indexOf(input.getAttribute('type')) ? 'input' : 'change'), async function(e) {
+            _addEventListener(input, (!~['radio', 'checkbox', 'select', 'hidden'].indexOf(input.getAttribute('type')) ? 'input' : 'change'), async function(e) {
               if (touched) {
                 await self.validate(e.target);
               }
