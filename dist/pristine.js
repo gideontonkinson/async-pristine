@@ -75,10 +75,12 @@ var Pristine = (() => {
     errorTextClass: "text-help",
     disableSubmitUntilValid: true,
     validateDefaultValues: true,
-    validationStrategy: "off"
+    validationStrategy: "off",
+    validateHiddenInputs: false
   };
   var PRISTINE_ERROR = "pristine-error";
   var SELECTOR = "input:not([type^=hidden]):not([type^=submit]), select, textarea";
+  var SELECTOR_HIDDEN = "input:not([type^=submit]), select, textarea";
   var ALLOWED_ATTRIBUTES = /* @__PURE__ */ new Set(["required", "min", "max", "minlength", "maxlength", "pattern"]);
   var EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@']+(\.[^<>()\[\]\\.,;:\s@']+)*)|('.+'))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   var MESSAGE_REGEX = /-message(?:-([a-z]{2}(?:_[A-Z]{2})?))?/;
@@ -159,7 +161,7 @@ var Pristine = (() => {
         self.destroyed = false;
         self.form = form2;
         self.config = mergeConfig(config2 || {}, defaultConfig);
-        self.fields = Array.from(form2.querySelectorAll(SELECTOR)).map(
+        self.fields = Array.from(form2.querySelectorAll(config2.validateHiddenInputs ? SELECTOR_HIDDEN : SELECTOR)).map(
           /** @param {HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement} input */
           function(input) {
             const fns = [];
@@ -199,19 +201,19 @@ var Pristine = (() => {
             });
             fns.sort((a, b) => b.priority - a.priority);
             if (self.config.validationStrategy === "live") {
-              _addEventListener(input, !~["radio", "checkbox", "select"].indexOf(input.getAttribute("type")) ? "input" : "change", async function(e) {
+              _addEventListener(input, !~["radio", "checkbox", "select", "hidden"].indexOf(input.getAttribute("type")) ? "input" : "change", async function(e) {
                 await self.validate(e.target);
               }.bind(self));
             } else if (self.config.validationStrategy === "blur") {
-              _addEventListener(input, !~["radio", "checkbox", "select"].indexOf(input.getAttribute("type")) ? "blur" : "change", async function(e) {
+              _addEventListener(input, !~["radio", "checkbox", "select", "hidden"].indexOf(input.getAttribute("type")) ? "blur" : "change", async function(e) {
                 await self.validate(e.target);
               }.bind(self));
             } else if (self.config.validationStrategy === "hybrid") {
-              _addEventListener(input, !~["radio", "checkbox", "select"].indexOf(input.getAttribute("type")) ? "blur" : "change", async function(e) {
+              _addEventListener(input, !~["radio", "checkbox", "select", "hidden"].indexOf(input.getAttribute("type")) ? "blur" : "change", async function(e) {
                 touched = true;
                 await self.validate(e.target);
               }.bind(self), { once: true });
-              _addEventListener(input, !~["radio", "checkbox", "select"].indexOf(input.getAttribute("type")) ? "input" : "change", async function(e) {
+              _addEventListener(input, !~["radio", "checkbox", "select", "hidden"].indexOf(input.getAttribute("type")) ? "input" : "change", async function(e) {
                 if (touched) {
                   await self.validate(e.target);
                 }
